@@ -1,0 +1,12 @@
+Arduino:
+
+cd arduino\
+make 
+./run.pl && make upload
+
+
+PC:
+
+cd pc\
+make 
+

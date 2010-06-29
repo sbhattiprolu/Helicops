@@ -23,30 +23,40 @@
 #include <unistd.h>;
 #include "wiimote.h"
 #include "wiimote_api.h"
+#include <curses.h>
 
 int main(int argc, char **argv)
 {
 	wiimote_t wiimote = WIIMOTE_INIT;
 	uint8_t data[6]={0,0,0,0,0,0};
-	
-	if (argc < 2) {
-		fprintf(stderr, "Usage: test1 BDADDR\n");
-		exit(1);
-	}
+	int nmotes=0;
 	
 	/* Print help information. */
+	initscr();
+	noecho();
+	keypad ( stdscr, TRUE );
 	
-	printf("test1 - libwiimote test application\n\n");
-	printf(" Home - Exit\n\n");
-	printf("Press buttons 1 and 2 on the wiimote now to connect.\n");
+	printw("\nDiscovering Wiimote ....");
+	printw("\n Home - Exit");
+	printw("\nPress buttons 1 and 2 on the wiimote now to connect.");
 	
-	/* Connect the wiimote specified on the command line. */
+  
+	/* Discover at most 1 wiimote devices. */
 	
-	if (wiimote_connect(&wiimote, argv[1]) < 0) {
-		fprintf(stderr, "unable to open wiimote: %s\n", wiimote_get_error());
+	nmotes=wiimote_discover(&wiimote,1);
+	if (nmotes<=0) {
+		endwin();
 		exit(1);
 	}
-
+	
+	printw("Found : %s\n",wiimote.link.r_addr);
+	
+	if (wiimote_connect(&wiimote, wiimote.link.r_addr) < 0) {
+	    fprintf(stderr, "unable to open wiimote: %s\n", wiimote_get_error());
+	}
+	else
+		printw("\n Connected");
+            
 	/* Activate the first led on the wiimote. It will take effect on the
 	   next call to wiimote_update. */
 
@@ -55,39 +65,39 @@ int main(int argc, char **argv)
 	wiimote_update(&wiimote);
 	nunchuk_enable(&wiimote,1);
 	
+	
 	while (wiimote_is_open(&wiimote)) {
-		
-		/* The wiimote_update function is used to synchronize the wiimote
-		   object with the real wiimote. It should be called as often as
-		   possible in order to minimize latency. */
-		
-		//if (wiimote_update(&wiimote) < 0) {
-		//	wiimote_disconnect(&wiimote);
-		//	break;
-		//}
-		
-		
+				
 		nunchuk_update(&wiimote);
                 		
-        // Send some data to the arduino
-        wiimote_write_byte(&wiimote, 0x04a40001, 0x01);
-        wiimote_write_byte(&wiimote, 0x04a40002, 0x02);
-        wiimote_write_byte(&wiimote, 0x04a40003, 0x03);
-        wiimote_write_byte(&wiimote, 0x04a40004, 0x04);
-        wiimote_write_byte(&wiimote, 0x04a40005, 0x05);
-        wiimote_write_byte(&wiimote, 0x04a40006, 0x06);
-        wiimote_write_byte(&wiimote, 0x04a40007, 0x07);
-        wiimote_write_byte(&wiimote, 0x04a40008, 0x08);
-        wiimote_write_byte(&wiimote, 0x04a40009, 0x09);
-        wiimote_write_byte(&wiimote, 0x04a4000A, 0x0A);
-        wiimote_write_byte(&wiimote, 0x04a4000B, 0x0B);
-        wiimote_write_byte(&wiimote, 0x04a4000C, 0x0C);
-        wiimote_write_byte(&wiimote, 0x04a4000D, 0x0D);
-        wiimote_write_byte(&wiimote, 0x04a4000E, 0x0E);
-        wiimote_write_byte(&wiimote, 0x04a4000F, 0x0F);
-	sleep(1);
-	//wiimote_read(&wiimote,0x04a400FA,data,6);
-		fprintf(stderr, "Byte 0=%03d 1=%03d 2=%03d 3=%03d 4=%03d 5=%d 6=%d\n", 
+        // check for key strokes .. 
+		switch ( getch() )
+		{
+		case KEY_UP:
+		  printw ( "UP\n" );
+		  wiimote_write_byte(&wiimote, 0x04a40001, 0x01);
+		  break;
+		case KEY_DOWN:
+		  printw ( "DOWN\n" );
+		  wiimote_write_byte(&wiimote, 0x04a40001, 0x02);
+		  break;
+		case KEY_LEFT:
+		  printw ( "LEFT\n" );
+		  wiimote_write_byte(&wiimote, 0x04a40001, 0x03);
+		  break;
+		case KEY_RIGHT:
+		  printw ( "RIGHT\n" );
+		  wiimote_write_byte(&wiimote, 0x04a40001, 0x04);
+		  break;
+		case 'e':
+		  endwin();
+		  exit(0);
+		  break;
+		}
+
+	   usleep(20000);
+	
+		printw("Byte 0=%03d 1=%03d 2=%03d 3=%03d 4=%03d 5=%d 6=%d\n", 
 			wiimote.ext.nunchuk.joyx,
 			wiimote.ext.nunchuk.joyy,
 			wiimote.ext.nunchuk.axis.x,
@@ -95,8 +105,11 @@ int main(int argc, char **argv)
 			wiimote.ext.nunchuk.axis.z,
 			wiimote.ext.nunchuk.keys.z,
 			wiimote.ext.nunchuk.keys.c);
-		fprintf(stderr, "\n");
+		printw("\n");
+		
+		refresh();
 	}		
+	endwin();
 	return 0;
 }
 

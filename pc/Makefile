@@ -4,7 +4,7 @@
 #include $(topdir)/config.mk
 INCLUDES=/usr/local/include/libcwiimote-0.4.0/libcwiimote/
 CFLAGS:=$(CFLAGS) #-static -g
-LIBS:=  -lcwiimote -lbluetooth -lm
+LIBS:=  -lcwiimote -lbluetooth -lm -lncurses
 
 all: main
 
