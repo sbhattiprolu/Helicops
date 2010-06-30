@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <unistd.h>;
+#include <unistd.h>
 #include "wiimote.h"
 #include "wiimote_api.h"
 #include <curses.h>
@@ -28,13 +28,13 @@
 int main(int argc, char **argv)
 {
 	wiimote_t wiimote = WIIMOTE_INIT;
-	uint8_t data[6]={0,0,0,0,0,0};
 	int nmotes=0;
 	
 	/* Print help information. */
 	initscr();
 	noecho();
 	keypad ( stdscr, TRUE );
+	scrollok(stdscr,TRUE);
 	
 	printw("\nDiscovering Wiimote ....");
 	printw("\n Home - Exit");
@@ -90,6 +90,7 @@ int main(int argc, char **argv)
 		  wiimote_write_byte(&wiimote, 0x04a40001, 0x04);
 		  break;
 		case 'e':
+		  wiimote_disconnect(&wiimote);
 		  endwin();
 		  exit(0);
 		  break;

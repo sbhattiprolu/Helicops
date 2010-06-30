@@ -1,26 +1,61 @@
 #include <Wire.h>
+#include <Servo.h>
 #include <string.h>
 #include <stdio.h>
-
+#define KEY_UP 0x01
+#define KEY_DOWN 0x02
+#define KEY_LEFT 0x03
+#define KEY_RIGHT 0x04
 
 uint8_t outbuf[6]; // array to store arduino output
-char storebuf[200]; //array to store arduino input (transmitted from PC)
+uint8_t recbuf[10];
 int cnt = 0;
-int ledPin = 13;
+Servo servox;
+int servo_value=90;
+int p_servo_value=90;
+
+
+//Detect the Key Pressed
+void
+DetectKey()
+{
+  switch(recbuf[1])
+  {
+    case KEY_UP:
+      Serial.println("UP");
+      if(servo_value<=145)
+        servo_value+=5;
+      break;
+    case KEY_DOWN:
+      Serial.println("DOWN");
+      if(servo_value>=45)
+        servo_value-=5;
+      break;
+    case KEY_LEFT:
+      Serial.println("LEFT");
+      break;
+    case KEY_RIGHT:
+      Serial.println("RIGHT");
+      break;
+    default:
+      Serial.print("Unknown Key ");
+      Serial.println(recbuf[1],DEC);
+      break;
+  }
+}
+
 void
 receiveEvent (int howMany)
 {
   //Serial.println("Recieve Event");
+  cnt=0;
   while (Wire.available ())
   {
-      int c = Wire.receive ();	// receive byte as an integer
-      if(c!=0){
-        Serial.print("Rec : 0x");
-        Serial.println(c,HEX);
-        cnt++;
-      }
-      
+      recbuf[cnt] = Wire.receive ();	// receive byte as an integer
+      cnt++;
   }
+  if(recbuf[0]==1)
+    DetectKey();
 
 }
 
@@ -59,36 +94,18 @@ setup ()
   Wire.begin (0x52);		// join i2c bus with address 0x52
   Wire.onReceive (receiveEvent);	// register event
   Wire.onRequest (requestEvent);	// register event
-}
-
-
-// Print the input data we have recieved
-void
-print ()
-{
-  int s = 0;
-
-  Serial.println ("Start data dump");
-  int a = strlen (storebuf); // Get the lenght of the buffer, then print it out one character at a time
-  while (s < (a - 1))
-    {
-      Serial.print (storebuf[s]);
-      s++;
-    }
-
-  cnt = 0;
-  strcpy (storebuf, ""); // empty out the storage buffer
-  Serial.println ("End data dump");
+  servox.attach(5);
+  servox.write(servo_value);
+  
 }
 
 void
 loop ()
 {
-  
-//  delay (100);
-
-
+  if(p_servo_value!=servo_value)
+  {
+    p_servo_value=servo_value;
+    servox.write(servo_value);
+  }
 }
-
-
 
